@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>副業収支管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#f5f5f0;color:#1a1a1a;font-size:14px}
+.app{max-width:600px;margin:0 auto;padding-bottom:80px}
+/* NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:0.5px solid #e0e0e0;display:flex;z-index:100;max-width:600px;margin:0 auto}
+.nb{flex:1;padding:10px 4px 8px;font-size:10px;cursor:pointer;border:none;background:none;color:#999;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nb.on{color:#1a1a1a}
+.nb svg{width:20px;height:20px}
+.pg{display:none;padding:12px}.pg.on{display:block}
+/* CARD */
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ct{font-size:15px;font-weight:600;margin-bottom:12px}
+/* METRICS */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mc{background:#f5f5f0;border-radius:8px;padding:12px}
+.ml{font-size:11px;color:#888;margin-bottom:3px}
+.mv{font-size:19px;font-weight:600}
+.mv.g{color:#1a7a4a}.mv.r{color:#c0392b}.mv.b{color:#1a5fa8}
+/* FORM */
+.fld{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fld label{font-size:11px;color:#666;font-weight:500}
+input,select{width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;background:#f9f9f7;color:#1a1a1a;font-size:14px;-webkit-appearance:none}
+input:focus,select:focus{outline:none;border-color:#1a1a1a}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn:active{opacity:.85}
+.btn-s{width:auto;padding:5px 12px;font-size:12px;background:none;color:#c0392b;border:1px solid #e0e0e0;border-radius:6px;cursor:pointer}
+.btn-outline{background:none;color:#1a1a1a;border:1px solid #e0e0e0;margin-top:8px}
+/* TABLE */
+.tbl-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid #f0f0f0}
+.tbl-row:last-child{border-bottom:none}
+.tbl-main{font-size:13px;font-weight:500}
+.tbl-sub{font-size:11px;color:#888;margin-top:2px}
+.tbl-amt{font-size:14px;font-weight:600;white-space:nowrap;margin-left:8px}
+.tbl-amt.g{color:#1a7a4a}.tbl-amt.r{color:#c0392b}
+.tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.ti{background:#e8f5ee;color:#1a7a4a}.te{background:#fdecea;color:#c0392b}.tf{background:#fff3e0;color:#e65100}
+/* BAR */
+.bb{background:#f0f0f0;border-radius:3px;height:5px;overflow:hidden;margin-top:4px}
+.bf{height:100%;border-radius:3px;background:#1a5fa8}
+/* TAX */
+.trow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f0f0f0;font-size:13px}
+.trow:last-child{border-bottom:none;font-weight:600;font-size:14px}
+.ibox{border-radius:8px;padding:12px;font-size:13px;margin-bottom:10px;line-height:1.5}
+.ibox.warn{background:#fff3e0;color:#e65100}.ibox.ok{background:#e8f5ee;color:#1a7a4a}.ibox.info{background:#e3f0fb;color:#1a5fa8}
+/* RECEIPT */
+.upload-zone{border:2px dashed #e0e0e0;border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:#f9f9f7}
+.r-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.r-card{border-radius:8px;overflow:hidden;background:#f5f5f0;position:relative}
+.r-card img{width:100%;height:90px;object-fit:cover;display:block}
+.r-info{padding:6px 8px;font-size:11px}
+.r-del{position:absolute;top:4px;right:4px;background:rgba(192,57,43,.9);color:#fff;border:none;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto}
+.modal img{width:100%;border-radius:8px;margin-bottom:12px;max-height:200px;object-fit:contain;background:#f5f5f0}
+/* LOG CAL */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-direction:column;gap:1px;border:1px solid #f0f0f0}
+.cal-day.has{background:#e3f0fb;color:#1a5fa8;border-color:#1a5fa8}
+.cal-day.today{border-color:#1a1a1a;font-weight:700}
+/* CHECKLIST */
+.ci{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid #f0f0f0;cursor:pointer}
+.ci:last-child{border-bottom:none}
+.cb{width:18px;height:18px;border-radius:4px;border:1.5px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px}
+.done .cb{background:#1a7a4a;border-color:#1a7a4a;color:#fff}
+.done .ct2{color:#aaa;text-decoration:line-through}
+.ct2{font-size:13px}
+/* FIXED */
+.fx-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid #f0f0f0}
+.fx-row:last-child{border-bottom:none}
+.badge-on{background:#e8f5ee;color:#1a7a4a;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.badge-off{background:#f5f5f0;color:#aaa;padding:2px 8px;border-radius:10px;font-size:10px}
+.hint{font-size:11px;color:#aaa;margin-top:3px}
+.empty{font-size:13px;color:#aaa;padding:12px 0}
+/* SECTION HEADER */
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.ftab{padding:5px 12px;border:1px solid #e0e0e0;border-radius:16px;font-size:12px;cursor:pointer;background:none;color:#888;white-space:nowrap;flex-shrink:0}
+.ftab.on{background:#e3f0fb;border-color:#1a5fa8;color:#1a5fa8}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- PAGES -->
+<div id="pg-dash" class="pg on">
+  <div style="padding:16px 14px 4px;font-size:18px;font-weight:700">副業収支管理</div>
+  <div style="padding:0 14px 10px;font-size:12px;color:#888" id="d-period"></div>
+  <div style="padding:0 2px"><div id="d-mg" class="mg"></div></div>
+  <div class="card"><div class="ct">月別収益・経費</div><div id="d-monthly"></div></div>
+  <div class="card"><div class="ct">経費内訳</div><div id="d-ecat"></div></div>
+</div>
+
+<div id="pg-income" class="pg">
+  <div class="card">
+    <div class="ct">ASP報酬を追加</div>
+    <div class="fld"><label>確定日</label><input type="date" id="i-date"></div>
+    <div class="fld"><label>ASP名</label><select id="i-asp">
+      <option>DMM（ファンザ）アフィリエイト</option><option>その他ASP</option><option>直接報酬</option>
+    </select></div>
+    <div class="fld"><label>金額（円）</label><input type="number" id="i-amount" placeholder="30000" inputmode="numeric"></div>
+    <div class="fld"><label>発生月</label><input type="month" id="i-period"></div>
+    <div class="fld"><label>CV数</label><input type="number" id="i-cv" placeholder="20" inputmode="numeric"></div>
+    <div class="fld"><label>メモ</label><input type="text" id="i-memo" placeholder="1月分確定報酬"></div>
+    <button class="btn" onclick="addIncome()">追加する</button>
+  </div>
+  <div class="card">
+    <div class="ct">収益履歴</div>
+    <div id="i-table"></div>
+  </div>
+</div>
+
+<div id="pg-expense" class="pg">
+  <!-- FIXED -->
+  <div class="card">
+    <div class="sec-hd"><div class="ct" style="margin:0">固定費</div><button class="btn-s btn-outline" style="padding:5px 10px;font-size:12px;color:#1a1a1a" onclick="showAddFixed()">＋ 追加</button></div>
+    <div id="f-list"></div>
+    <div style="display:flex;justify-content:space-between;padding-top:10px;border-top:0.5px solid #f0f0f0;font-size:13px;margin-top:4px">
+      <span style="color:#888">月額合計</span>
+      <span style="font-weight:600;color:#c0392b" id="f-total"></span>
+    </div>
+  </div>
+  <!-- OTHER EXPENSE -->
+  <div class="card">
+    <div class="ct">その他経費を追加</div>
+    <div class="fld"><label>日付</label><input type="date" id="e-date"></div>
+    <div class="fld"><label>カテゴリ</label><select id="e-cat">
+      <optgroup label="外注費"><option>外注費 - 画像・動画制作</option><option>外注費 - 文章・キャプション作成</option><option>外注費 - アカウント管理代行</option></optgroup>
+      <optgroup label="機器・消耗品"><option>スマホ・PC本体（減価償却）</option><option>外付けストレージ・周辺機器</option><option>消耗品費</option></optgroup>
+      <optgroup label="学習・情報収集"><option>書籍・電子書籍</option><option>セミナー・講座受講費</option><option>有料メルマガ・情報商材</option><option>作品購入費（調査・仕入れ）</option></optgroup>
+      <optgroup label="交際費・会議費"><option>打ち合わせ飲食費</option><option>交通費（打ち合わせ）</option></optgroup>
+      <optgroup label="その他"><option>広告費</option><option>アカウント購入費</option><option>自動化ツール費</option><option>その他</option></optgroup>
+    </select></div>
+    <div class="fld"><label>金額（円）</label><input type="number" id="e-amount" placeholder="5000" inputmode="numeric"></div>
+    <div class="fld"><label>支払先</label><input type="text" id="e-vendor" placeholder="例：クラウドワークス"></div>
+    <div class="fld"><label>按分率（%）</label><input type="number" id="e-ratio" value="100" min="1" max="100" inputmode="numeric"><div class="hint">共用の場合のみ変更（スマホ代50%など）</div></div>
+    <div class="fld"><label>メモ</label><input type="text" id="e-memo"></div>
+    <div id="e-meeting-note" style="display:none" class="ibox info" style="margin-bottom:10px">「誰と・何のために」をメモに記録しておくと安全です。</div>
+    <button class="btn" onclick="addExpense()">追加する</button>
+  </div>
+  <div class="card"><div class="ct">その他経費履歴</div><div id="e-table"></div></div>
+</div>
+
+<div id="pg-receipt" class="pg">
+  <div class="card">
+    <div class="ct">領収書・明細を保存</div>
+    <div class="upload-zone" onclick="document.getElementById('r-file').click()">
+      <div style="font-size:28px;margin-bottom:6px">📷</div>
+      <div style="font-size:14px;color:#666">タップして写真を選択</div>
+      <div style="font-size:11px;color:#aaa;margin-top:3px">JPG・PNG対応</div>
+    </div>
+    <input type="file" id="r-file" accept="image/*" capture="environment" style="display:none" onchange="uploadReceipt(this)">
+  </div>
+  <div class="card">
+    <div class="sec-hd">
+      <div class="ct" style="margin:0">保存済み <span id="r-count" style="font-size:13px;font-weight:400;color:#888"></span></div>
+    </div>
+    <div class="filter-row" id="r-filter-tabs"></div>
+    <div class="r-grid" id="r-grid"></div>
+  </div>
+</div>
+
+<div id="pg-log" class="pg">
+  <div class="card">
+    <div class="ct">今日の作業を記録</div>
+    <div class="fld"><label>日付</label><input type="date" id="l-date"></div>
+    <div class="fld"><label>作業時間</label><select id="l-hours">
+      <option value="0.5">0.5時間</option><option value="1">1時間</option><option value="1.5" selected>1.5時間</option>
+      <option value="2">2時間</option><option value="2.5">2.5時間</option><option value="3">3時間</option><option value="4">4時間以上</option>
+    </select></div>
+    <div class="fld"><label>作業内容</label><select id="l-type">
+      <option>作品リサーチ・選定</option><option>投稿作成・編集</option><option>画像・動画編集</option>
+      <option>情報収集・トレンド調査</option><option>外注管理・やり取り</option><option>分析・改善</option><option>その他</option>
+    </select></div>
+    <button class="btn" onclick="addLog()">記録する</button>
+  </div>
+  <div class="card">
+    <div class="ct">今月のログ</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px" id="l-daynames"></div>
+    <div class="cal-grid" id="l-calendar"></div>
+    <div id="l-stats" style="margin-top:12px"></div>
+  </div>
+  <div class="card">
+    <div class="ct">スマホ・Wi-Fi 按分率</div>
+    <div id="l-ratio"></div>
+    <div class="hint" style="margin-top:6px">作業ログをもとに自動計算。通信費の按分率として使えます。</div>
+  </div>
+</div>
+
+<div id="pg-tax" class="pg">
+  <div class="card">
+    <div class="ct">確定申告シミュレーター</div>
+    <div class="fld"><label>申告年度</label><select id="t-year" onchange="renderTax()"><option>2025</option><option>2024</option></select></div>
+    <div class="fld"><label>本業の給与収入（万円）</label><input type="number" id="t-main" placeholder="400" oninput="renderTax()" inputmode="numeric"></div>
+    <div class="fld"><label>申告種別</label><select id="t-kind" onchange="renderTax()">
+      <option value="blue65">青色申告（65万円控除）</option>
+      <option value="blue10">青色申告（10万円控除）</option>
+      <option value="white">白色申告</option>
+    </select></div>
+    <div id="t-result"></div>
+  </div>
+  <div class="card"><div class="ct">申告チェックリスト</div><div id="t-check"></div></div>
+  <div class="card"><div class="ct">必要書類</div><div id="t-docs"></div></div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nb on" onclick="go('dash')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    ホーム
+  </button>
+  <button class="nb" onclick="go('income')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    収益
+  </button>
+  <button class="nb" onclick="go('expense')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    経費
+  </button>
+  <button class="nb" onclick="go('receipt')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    領収書
+  </button>
+  <button class="nb" onclick="go('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    ログ
+  </button>
+  <button class="nb" onclick="go('tax')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    申告
+  </button>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="r-modal">
+  <div class="modal">
+    <div style="font-size:15px;font-weight:700;margin-bottom:12px">領収書の情報を入力</div>
+    <img id="r-modal-img" src="" alt="">
+    <div class="fld"><label>カテゴリ</label><select id="r-modal-cat">
+      <option>外注費</option><option>固定費・サブスク</option><option>交際費・会議費</option>
+      <option>機器・消耗品</option><option>学習費</option><option>振込明細</option><option>その他</option>
+    </select></div>
+    <div class="fld"><label>日付</label><input type="date" id="r-modal-date"></div>
+    <div class="fld"><label>メモ（支払先・金額など）</label><input type="text" id="r-modal-memo" placeholder="例：クラウドワークス 8,000円"></div>
+    <button class="btn" onclick="saveReceipt()">保存する</button>
+    <button class="btn btn-outline" onclick="closeModal()">キャンセル</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="f-modal">
+  <div class="modal">
+    <div style="font-size:15px;font-weight:700;margin-bottom:12px">固定費を登録</div>
+    <div class="fld"><label>サービス名</label><input type="text" id="fm-name" placeholder="例：CapCut Pro"></div>
+    <div class="fld"><label>カテゴリ</label><select id="fm-cat">
+      <option>動画編集ソフト</option><option>画像編集ソフト</option><option>X Premium</option>
+      <option>スケジュール管理ツール</option><option>VPN・セキュリティ</option>
+      <option>サブスク（その他ツール）</option><option>スマホ代（通信費）</option>
+      <option>Wi-Fi・インターネット代</option><option>その他固定費</option>
+    </select></div>
+    <div class="fld"><label>月額（円）</label><input type="number" id="fm-amount" placeholder="2000" inputmode="numeric"></div>
+    <div class="fld"><label>按分率（%）</label><input type="number" id="fm-ratio" value="100" min="1" max="100" inputmode="numeric"></div>
+    <div class="fld"><label>引落日（毎月）</label><select id="fm-day">
+      <option value="1">1日</option><option value="5">5日</option><option value="10">10日</option>
+      <option value="15">15日</option><option value="20">20日</option><option value="25">25日</option><option value="28">28日</option>
+    </select></div>
+    <div class="fld"><label>開始月</label><input type="month" id="fm-start"></div>
+    <button class="btn" onclick="addFixed()">登録する</button>
+    <button class="btn btn-outline" onclick="closeFixedModal()">キャンセル</button>
+  </div>
+</div>
+
+<script>
+let S={income:[],fixed:[],expense:[],logs:[],receipts:[]};
+let nid=1;
+let pendingImg=null;
+let activeFilter='all';
+
+const fmt=n=>new Intl.NumberFormat('ja-JP').format(Math.round(n));
+const today=()=>new Date().toISOString().split('T')[0];
+const thisMonth=()=>new Date().toISOString().slice(0,7);
+
+function load(){
+  try{
+    const d=localStorage.getItem('fk_data');
+    if(d){S=JSON.parse(d);nid=Math.max(...[...S.income,...S.fixed,...S.expense,...S.logs].map(x=>x.id||0),S.receipts.map(x=>x.id||0).reduce((a,b)=>Math.max(a,b),0))+1}
+  }catch(e){}
+}
+function save(){try{localStorage.setItem('fk_data',JSON.stringify(S))}catch(e){}}
+
+load();
+
+function expandFixed(yr){
+  const rows=[];
+  S.fixed.forEach(f=>{
+    if(!f.active)return;
+    const[sy,sm]=f.start.split('-').map(Number);
+    for(let m=1;m<=12;m++){
+      if(parseInt(yr)<sy||(parseInt(yr)===sy&&m<sm))continue;
+      rows.push({id:'f_'+f.id+'_'+m,date:`${yr}-${String(m).padStart(2,'0')}-${String(f.day).padStart(2,'0')}`,
+        cat:f.cat,amount:f.amount,vendor:f.name,ratio:f.ratio,memo:'（固定費）',isFixed:true});
+    }
+  });
+  return rows;
+}
+function allExp(yr){return[...S.expense.filter(r=>r.date.startsWith(yr)),...expandFixed(yr)]}
+function totalInc(yr){return S.income.filter(r=>r.date.startsWith(yr)).reduce((s,r)=>s+r.amount,0)}
+function totalExp(yr){return allExp(yr).reduce((s,r)=>s+Math.round(r.amount*r.ratio/100),0)}
+
+function go(p){
+  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('on',['dash','income','expense','receipt','log','tax'][i]===p));
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  document.getElementById('pg-'+p).classList.add('on');
+  window.scrollTo(0,0);
+  if(p==='dash')renderDash();
+  if(p==='income')renderIncomeTable();
+  if(p==='expense'){renderFixed();renderExpenseTable()}
+  if(p==='receipt')renderReceipts();
+  if(p==='log')renderLog();
+  if(p==='tax')renderTax();
+}
+
+function renderDash(){
+  const yr='2025',inc=totalInc(yr),exp=totalExp(yr),profit=inc-exp;
+  const fixedM=S.fixed.filter(f=>f.active).reduce((s,f)=>s+Math.round(f.amount*f.ratio/100),0);
+  document.getElementById('d-period').textContent=`${yr}年 累計`;
+  document.getElementById('d-mg').innerHTML=`
+    <div class="mc"><div class="ml">総収益</div><div class="mv g">¥${fmt(inc)}</div></div>
+    <div class="mc"><div class="ml">総経費</div><div class="mv r">¥${fmt(exp)}</div></div>
+    <div class="mc"><div class="ml">副業所得</div><div class="mv b">¥${fmt(profit)}</div></div>
+    <div class="mc"><div class="ml">固定費（月額）</div><div class="mv r">¥${fmt(fixedM)}</div></div>
+  `;
+  const months=Array.from({length:12},(_,i)=>String(i+1).padStart(2,'0'));
+  const maxV=Math.max(...months.map(m=>S.income.filter(r=>r.date.startsWith(yr+'-'+m)).reduce((s,r)=>s+r.amount,0)),1);
+  let mh='<div style="display:flex;align-items:flex-end;gap:3px;height:80px">';
+  months.forEach((m,i)=>{
+    const i2=S.income.filter(r=>r.date.startsWith(yr+'-'+m)).reduce((s,r)=>s+r.amount,0);
+    const e2=allExp(yr).filter(r=>r.date.startsWith(yr+'-'+m)).reduce((s,r)=>s+Math.round(r.amount*r.ratio/100),0);
+    mh+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0">
+      <div style="width:100%;display:flex;align-items:flex-end;justify-content:center;gap:1px;height:72px">
+        <div style="flex:1;background:#1a7a4a33;border-radius:2px 2px 0 0;height:${Math.round(i2/maxV*72)}px"></div>
+        <div style="flex:1;background:#c0392b33;border-radius:2px 2px 0 0;height:${Math.round(e2/maxV*72)}px"></div>
+      </div>
+      <div style="font-size:8px;color:#aaa;margin-top:2px">${i+1}</div>
+    </div>`;
+  });
+  mh+='</div>';
+  mh+='<div style="display:flex;gap:10px;margin-top:8px;font-size:10px;color:#888"><span>■ <span style="color:#1a7a4a">収益</span></span><span>■ <span style="color:#c0392b">経費</span></span></div>';
+  document.getElementById('d-monthly').innerHTML=mh;
+
+  const eMap={};
+  allExp(yr).forEach(r=>{const v=Math.round(r.amount*r.ratio/100);eMap[r.cat]=(eMap[r.cat]||0)+v});
+  const etot=Object.values(eMap).reduce((s,v)=>s+v,0)||1;
+  document.getElementById('d-ecat').innerHTML=Object.entries(eMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const p=Math.round(v/etot*100);
+    return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px"><span>${k}</span><span style="color:#888">¥${fmt(v)}</span></div><div class="bb"><div class="bf" style="width:${p}%"></div></div></div>`;
+  }).join('')||'<div class="empty">データなし</div>';
+}
+
+function renderIncomeTable(){
+  document.getElementById('i-table').innerHTML=[...S.income].sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`
+    <div class="tbl-row">
+      <div><div class="tbl-main">${r.asp}</div><div class="tbl-sub">${r.date}　${r.period?'対象:'+r.period:''}　${r.cv?'CV:'+r.cv:''}　${r.memo||''}</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="tbl-amt g">+¥${fmt(r.amount)}</div>
+        <button class="btn-s" onclick="delInc(${r.id})">削除</button>
+      </div>
+    </div>`).join('')||'<div class="empty">まだデータがありません</div>';
+}
+
+function renderFixed(){
+  const total=S.fixed.filter(f=>f.active).reduce((s,f)=>s+Math.round(f.amount*f.ratio/100),0);
+  document.getElementById('f-total').textContent='-¥'+fmt(total)+'/月';
+  document.getElementById('f-list').innerHTML=S.fixed.length?S.fixed.map(f=>`
+    <div class="fx-row">
+      <div>
+        <div style="font-size:13px;font-weight:500;${f.active?'':'color:#aaa'}">${f.name}</div>
+        <div style="font-size:11px;color:#888">${f.cat}${f.ratio<100?' · 按分'+f.ratio+'%':''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:13px;font-weight:600;${f.active?'color:#c0392b':'color:#aaa'}">¥${fmt(Math.round(f.amount*f.ratio/100))}/月</span>
+        <span class="${f.active?'badge-on':'badge-off'}">${f.active?'有効':'停止'}</span>
+        <button class="btn-s" onclick="toggleFixed(${f.id})">${f.active?'停止':'再開'}</button>
+        <button class="btn-s" onclick="delFixed(${f.id})">削除</button>
+      </div>
+    </div>`).join(''):'<div class="empty">まだ登録されていません</div>';
+}
+
+function renderExpenseTable(){
+  document.getElementById('e-table').innerHTML=[...S.expense].sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`
+    <div class="tbl-row">
+      <div><div class="tbl-main">${r.cat}</div><div class="tbl-sub">${r.date}　${r.vendor||''}　${r.ratio<100?'按分'+r.ratio+'%':''}　${r.memo||''}</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="tbl-amt r">-¥${fmt(Math.round(r.amount*r.ratio/100))}</div>
+        <button class="btn-s" onclick="delExp(${r.id})">削除</button>
+      </div>
+    </div>`).join('')||'<div class="empty">まだデータがありません</div>';
+}
+
+function showAddFixed(){
+  document.getElementById('fm-start').value=thisMonth();
+  document.getElementById('f-modal').classList.add('open');
+}
+function closeFixedModal(){document.getElementById('f-modal').classList.remove('open')}
+
+function addFixed(){
+  const name=document.getElementById('fm-name').value.trim(),amount=parseFloat(document.getElementById('fm-amount').value);
+  if(!name||!amount){alert('サービス名と金額は必須です');return}
+  S.fixed.push({id:nid++,name,cat:document.getElementById('fm-cat').value,amount,
+    ratio:parseInt(document.getElementById('fm-ratio').value)||100,
+    day:parseInt(document.getElementById('fm-day').value),
+    start:document.getElementById('fm-start').value||thisMonth(),active:true});
+  save();closeFixedModal();
+  document.getElementById('fm-name').value='';document.getElementById('fm-amount').value='';document.getElementById('fm-ratio').value='100';
+  renderFixed();
+}
+function toggleFixed(id){const f=S.fixed.find(x=>x.id===id);if(f){f.active=!f.active;save();renderFixed()}}
+function delFixed(id){if(!confirm('削除しますか？'))return;S.fixed=S.fixed.filter(x=>x.id!==id);save();renderFixed()}
+
+function addIncome(){
+  const d=document.getElementById('i-date').value,a=parseFloat(document.getElementById('i-amount').value);
+  if(!d||!a){alert('日付と金額は必須です');return}
+  S.income.push({id:nid++,date:d,asp:document.getElementById('i-asp').value,amount:a,
+    period:document.getElementById('i-period').value,cv:parseInt(document.getElementById('i-cv').value)||0,
+    memo:document.getElementById('i-memo').value});
+  save();['i-amount','i-cv','i-memo'].forEach(id=>document.getElementById(id).value='');
+  renderIncomeTable();alert('追加しました');
+}
+
+function addExpense(){
+  const d=document.getElementById('e-date').value,a=parseFloat(document.getElementById('e-amount').value);
+  if(!d||!a){alert('日付と金額は必須です');return}
+  const cat=document.getElementById('e-cat').value;
+  S.expense.push({id:nid++,date:d,cat,amount:a,vendor:document.getElementById('e-vendor').value,
+    ratio:parseInt(document.getElementById('e-ratio').value)||100,memo:document.getElementById('e-memo').value});
+  save();['e-amount','e-vendor','e-memo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('e-ratio').value='100';renderExpenseTable();alert('追加しました');
+}
+
+function delInc(id){if(!confirm('削除しますか？'))return;S.income=S.income.filter(r=>r.id!==id);save();renderIncomeTable()}
+function delExp(id){if(!confirm('削除しますか？'))return;S.expense=S.expense.filter(r=>r.id!==id);save();renderExpenseTable()}
+
+// RECEIPT
+function uploadReceipt(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    pendingImg={data:e.target.result,name:file.name};
+    document.getElementById('r-modal-img').src=e.target.result;
+    document.getElementById('r-modal-date').value=today();
+    document.getElementById('r-modal-memo').value='';
+    document.getElementById('r-modal').classList.add('open');
+  };
+  reader.readAsDataURL(file);input.value='';
+}
+function closeModal(){document.getElementById('r-modal').classList.remove('open');pendingImg=null}
+function saveReceipt(){
+  if(!pendingImg)return;
+  S.receipts.push({id:nid++,data:pendingImg.data,cat:document.getElementById('r-modal-cat').value,
+    date:document.getElementById('r-modal-date').value,memo:document.getElementById('r-modal-memo').value});
+  save();closeModal();renderReceipts();
+}
+function delReceipt(id){if(!confirm('削除しますか？'))return;S.receipts=S.receipts.filter(r=>r.id!==id);save();renderReceipts()}
+
+function renderReceipts(){
+  const cats=['all',...new Set(S.receipts.map(r=>r.cat))];
+  document.getElementById('r-filter-tabs').innerHTML=cats.map(c=>`
+    <button class="ftab${activeFilter===c?' on':''}" onclick="setFilter('${c}')">${c==='all'?'すべて':c}</button>`).join('');
+  const filtered=activeFilter==='all'?S.receipts:S.receipts.filter(r=>r.cat===activeFilter);
+  document.getElementById('r-count').textContent=filtered.length+'枚';
+  document.getElementById('r-grid').innerHTML=filtered.length?filtered.map(r=>`
+    <div class="r-card">
+      <img src="${r.data}" alt="">
+      <button class="r-del" onclick="delReceipt(${r.id})">削除</button>
+      <div class="r-info"><div style="font-weight:600">${r.memo||'（メモなし）'}</div><div style="color:#888">${r.cat}<br>${r.date}</div></div>
+    </div>`).join(''):'<div class="empty">まだ保存されていません</div>';
+}
+function setFilter(c){activeFilter=c;renderReceipts()}
+
+// LOG
+function addLog(){
+  const d=document.getElementById('l-date').value;if(!d){alert('日付を選択してください');return}
+  S.logs.push({id:nid++,date:d,hours:parseFloat(document.getElementById('l-hours').value),type:document.getElementById('l-type').value});
+  save();renderLog();alert('記録しました');
+}
+
+function renderLog(){
+  const now=new Date(),yr=now.getFullYear(),mo=now.getMonth();
+  const firstDay=new Date(yr,mo,1).getDay(),daysInMonth=new Date(yr,mo+1,0).getDate();
+  const monthStr=`${yr}-${String(mo+1).padStart(2,'0')}`;
+  const logsM=S.logs.filter(l=>l.date.startsWith(monthStr));
+  const logMap={};logsM.forEach(l=>{logMap[l.date]=(logMap[l.date]||0)+l.hours});
+  const days=['日','月','火','水','木','金','土'];
+  document.getElementById('l-daynames').innerHTML=days.map(d=>`<div style="text-align:center;font-size:10px;color:#aaa">${d}</div>`).join('');
+  let cal='';
+  for(let i=0;i<firstDay;i++)cal+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const h=logMap[ds]||0,isToday=ds===today();
+    cal+=`<div class="cal-day${h?' has':''}${isToday?' today':''}"><span>${d}</span>${h?`<span style="font-size:8px">${h}h</span>`:''}</div>`;
+  }
+  document.getElementById('l-calendar').innerHTML=cal;
+  const totalH=logsM.reduce((s,l)=>s+l.hours,0),workD=Object.keys(logMap).length;
+  document.getElementById('l-stats').innerHTML=`<div class="mg" style="grid-template-columns:1fr 1fr 1fr;gap:6px">
+    <div class="mc"><div class="ml">今月の作業</div><div class="mv b" style="font-size:16px">${totalH}h</div></div>
+    <div class="mc"><div class="ml">作業日数</div><div class="mv" style="font-size:16px">${workD}日</div></div>
+    <div class="mc"><div class="ml">平均/日</div><div class="mv" style="font-size:16px">${workD>0?(totalH/workD).toFixed(1):0}h</div></div>
+  </div>`;
+  const allH=S.logs.reduce((s,l)=>s+l.hours,0),allD=new Set(S.logs.map(l=>l.date)).size||1;
+  const avg=allH/allD,ratio=Math.min(Math.round(avg/16*100),100);
+  document.getElementById('l-ratio').innerHTML=`<div style="display:flex;align-items:center;gap:12px">
+    <div style="flex:1"><div style="font-size:13px;margin-bottom:6px">平均 <strong>${avg.toFixed(1)}時間/日</strong></div>
+    <div class="bb" style="height:8px"><div class="bf" style="width:${ratio}%"></div></div></div>
+    <div style="text-align:center;background:#e3f0fb;border-radius:8px;padding:8px 12px">
+      <div style="font-size:26px;font-weight:700;color:#1a5fa8">${ratio}%</div>
+      <div style="font-size:10px;color:#888">推奨按分率</div>
+    </div>
+  </div>`;
+}
+
+function renderTax(){
+  const yr=document.getElementById('t-year').value,kind=document.getElementById('t-kind').value;
+  const inc=totalInc(yr),exp=totalExp(yr),profit=inc-exp;
+  const ded=kind==='blue65'?650000:kind==='blue10'?100000:0;
+  const actualDed=Math.min(Math.max(profit,0),ded),taxable=Math.max(0,profit-actualDed);
+  let box=profit>200000?`<div class="ibox warn">確定申告が必要です（副業所得が20万円超）<br>申告期限：翌年3月15日</div>`:
+    profit>0?`<div class="ibox ok">副業所得が20万円以下のため確定申告は不要な可能性があります</div>`:
+    `<div class="ibox info">現時点では所得がマイナスです。青色申告なら赤字を3年間繰り越せます。</div>`;
+  document.getElementById('t-result').innerHTML=`${box}
+    <div style="background:#f5f5f0;border-radius:8px;padding:12px">
+      <div class="trow"><span>副業総収入</span><span>¥${fmt(inc)}</span></div>
+      <div class="trow"><span>必要経費合計</span><span style="color:#c0392b">-¥${fmt(exp)}</span></div>
+      <div class="trow"><span>副業所得</span><span>¥${fmt(profit)}</span></div>
+      <div class="trow"><span>${kind==='blue65'?'青色申告控除（最大65万円）':kind==='blue10'?'青色申告控除（10万円）':'白色申告（控除なし）'}</span><span style="color:#c0392b">-¥${fmt(actualDed)}</span></div>
+      <div class="trow"><span style="font-weight:700">課税対象所得</span><span style="color:#1a5fa8;font-size:16px;font-weight:700">¥${fmt(taxable)}</span></div>
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-top:8px">※ 正確な税額は本業収入との合算が必要です。</div>`;
+  document.getElementById('t-check').innerHTML=[
+    {done:S.income.length>0,text:'ASP報酬をすべて入力した'},
+    {done:S.fixed.length>0,text:'固定費（サブスク・通信費）を登録した'},
+    {done:S.expense.length>0,text:'その他経費を入力した'},
+    {done:S.logs.length>0,text:'作業ログを記録した（按分率の根拠）'},
+    {done:S.receipts.length>0,text:'領収書・明細を保存した'},
+    {done:false,text:'外注費を個人に年間5万円超払った場合、支払調書を確認した'},
+    {done:false,text:'青色申告承認申請書を提出した'},
+    {done:false,text:'3月15日までに申告・納付した'},
+  ].map(c=>`<div class="ci ${c.done?'done':''}" onclick="this.classList.toggle('done');this.querySelector('.cb').textContent=this.classList.contains('done')?'✓':''">
+    <div class="cb">${c.done?'✓':''}</div><span class="ct2">${c.text}</span></div>`).join('');
+  document.getElementById('t-docs').innerHTML=['源泉徴収票（本業分）','ASPの報酬明細・支払調書（DMM等）',
+    '外注費の領収書・振込明細','サブスクの請求書・メール（固定費分）',
+    '作業ログ（按分率の根拠として保管）','青色申告決算書（e-Taxで作成）',
+    'マイナンバーカードまたは通知カード＋本人確認書類',
+  ].map(d=>`<div style="display:flex;gap:8px;padding:8px 0;border-bottom:0.5px solid #f0f0f0;font-size:13px">
+    <span style="color:#aaa;flex-shrink:0">•</span>${d}</div>`).join('');
+}
+
+document.getElementById('e-cat').addEventListener('change',function(){
+  document.getElementById('e-meeting-note').style.display=this.value.includes('打ち合わせ')||this.value.includes('交通費')?'block':'none';
+});
+
+document.getElementById('i-date').value=today();
+document.getElementById('e-date').value=today();
+document.getElementById('l-date').value=today();
+renderDash();
+</script>
+</body>
+</html>
